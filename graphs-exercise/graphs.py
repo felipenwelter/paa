@@ -9,15 +9,24 @@
 import csv
 
 class Grafo:
-    def __init__(self, direcionado=True):
-        self.lista_vertices = []
-        self.lista_arestas = []
+    def __init__(self, direcionado=False):
+        self.vertices = []
+        self.visitedVertices = []
+        self.adjacent = []
+        self.arestas = []
 
     def newVertice(self, ident):
-        self.lista_vertices.append( ident )
+        self.vertices.append( ident )
+        self.visitedVertices.append(0)
+        self.adjacent.append( [] )
 
     def newAresta(self, v1, v2):
-        self.lista_arestas.append ( [v1, v2] )
+        self.arestas.append( [v1, v2] )
+
+    def montaAdjacentes(self):
+        for i in self.arestas:
+            self.adjacent[i[0]-1].append( i[1] )
+            self.adjacent[i[1]-1].append( i[0] )
 
     def importFromTxt(self):
         nLine = 0
@@ -29,7 +38,27 @@ class Grafo:
                         self.newVertice( int(i) )
                 else: #nas demais linhas encontra as arestas
                     self.newAresta( int(row[0]), int(row[1]) )
+        self.montaAdjacentes()
+
+    def depth_search(self,vIndex): # recebe o index do vertice a fazer a busca em profundidade
+        self.visitedVertices[ vIndex ] = 1 # marca vertice como visitado (pelo seu indice)
+        for adj in self.adjacent[ vIndex ]: # para cada vértice adjacente (busca pelo índice)
+            if (self.visitedVertices[ self.vertices.index(adj) ] == 0): # verifica se ainda não foi visitado
+                self.depth_search( self.vertices.index(adj) ) # busca nos vertices ligados, passando o index
+
+    def isConnected(self): # verifica se grafo é conexo
+        self.depth_search(0)  #busca nos vertices ligados, passando o index de um elemento qualquer
+        if (self.visitedVertices.count(0) > 0): #verifica se algum vertice nao foi visitado após a busca
+            return False
+        else:
+            return True
 
 
 grafo = Grafo()
 grafo.importFromTxt()
+isConnected = grafo.isConnected()
+print("grafo conexo? %r" % isConnected)
+
+
+#Ref:
+#http://www.professeurs.polymtl.ca/michel.gagnon/Disciplinas/Bac/Grafos/Busca/busca.html#Prof
