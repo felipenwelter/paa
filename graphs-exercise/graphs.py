@@ -7,13 +7,17 @@
 # 5 - dar a complexidade da implementação dos itens 2, 3 e 4
 
 import csv
+import copy
 
 class Grafo:
     def __init__(self, direcionado=False):
         self.vertices = []
         self.visitedVertices = []
+        self.visitedArestas = []
         self.adjacent = []
+        self.copyAdj = []
         self.arestas = []
+        self.eulerCycle = []
 
     def newVertice(self, ident):
         self.vertices.append( ident )
@@ -22,11 +26,14 @@ class Grafo:
 
     def newAresta(self, v1, v2):
         self.arestas.append( [v1, v2] )
+        self.visitedArestas.append(0)
 
     def montaAdjacentes(self):
         for i in self.arestas:
-            self.adjacent[i[0]-1].append( i[1] )
-            self.adjacent[i[1]-1].append( i[0] )
+            nPos1 = self.vertices.index(i[0])
+            nPos2 = self.vertices.index(i[1])
+            self.adjacent[nPos1].append( i[1] )
+            self.adjacent[nPos2].append( i[0] )
 
     def importFromTxt(self):
         nLine = 0
@@ -48,17 +55,84 @@ class Grafo:
 
     def isConnected(self): # verifica se grafo é conexo
         self.depth_search(0)  #busca nos vertices ligados, passando o index de um elemento qualquer
-        if (self.visitedVertices.count(0) > 0): #verifica se algum vertice nao foi visitado após a busca
-            return False
+        return (self.visitedVertices.count(0) == 0) #verifica se algum vertice nao foi visitado após a busca
+
+    def isAllPair(self): #verifica se todos os vertices tem grau par
+        for i in self.adjacent:
+            if (len(i) % 2) > 0:
+                return False
+        return True
+
+
+    def getArestaPosition(self,v1,v2):
+        nPos = self.arestas.count([v1,v2])
+        if nPos == 0:
+            nPos = self.arestas.index([v2,v1])
         else:
-            return True
+            nPos = self.arestas.index([v1,v2])
+        return nPos
+
+    def depth_search2(self,vIndex,startV): # recebe o index do vertice a fazer a busca em profundidade
+        v1 = self.vertices[vIndex]
+        for adj in self.adjacent[ vIndex ]: # para cada vértice adjacente (busca pelo índice)
+            v2 = adj
+            nPos = self.getArestaPosition(v1,v2)
+            if (self.visitedArestas[ nPos ] == 0): # verifica se ainda não foi visitado
+                self.visitedArestas[nPos] = 1
+                self.eulerCycle.append(v1)
+                self.depth_search2( self.vertices.index(adj),startV ) # busca nos vertices ligados, passando o index
+            else:
+                if (vIndex == startV):
+                    self.eulerCycle.append(v1)
+
+    def depth_search3(self,vIndex,vStart):
+        self.copyAdj = copy.deepcopy(self.adjacent) # copia a lista sem manter referencia
+        v1 = self.vertices[vIndex]
+        for adj in self.adjacent[vIndex]:
+            # if aqui
+            v2 = adj
+            nPos = self.vertices.index(v1)
+            self.copyAdj[nPos].remove(v2)
+            nPos = self.vertices.index(v2)
+            self.copyAdj[nPos].remove(v1)
+
+            # a ideia aqui foi trocar a forma de controle de onde ja entrou
+            # pra deixar de ser a lista visitedArestas
+            # e sim removendo os valores adjacentes da lista, pra que
+            # o ciclo euleriano nunca tente voltar pra uma aresta de onde ele ja veio
+            # assim, chegaria no ultimo somente 1x e imprimiria o vertice inicial no fim tambem
+
+            #aqui pra baixo tem que ser completado
+            nPos = self.getArestaPosition(v1,v2)
+            if (self.visitedArestas[ nPos ] == 0): # verifica se ainda não foi visitado
+                self.visitedArestas[nPos] = 1
+                self.eulerCycle.append(v1)
+                self.depth_search2( self.vertices.index(adj),startV ) # busca nos vertices ligados, passando o index
+            else:
+                if (vIndex == startV):
+                    self.eulerCycle.append(v1)
+
+
+
+
+
+
+    def Hierholzer(self): #funcao para identificar circuito euleriano
+        self.depth_search3(0,0)
+
 
 
 grafo = Grafo()
 grafo.importFromTxt()
 isConnected = grafo.isConnected()
+isPair = grafo.isAllPair()
+grafo.Hierholzer()
+
 print("grafo conexo? %r" % isConnected)
+print("cada vertice tem numero par de arestas? %r" % isPair)
+print("Euler Cycle: %r" % grafo.eulerCycle)
 
 
 #Ref:
 #http://www.professeurs.polymtl.ca/michel.gagnon/Disciplinas/Bac/Grafos/Busca/busca.html#Prof
+#https://paginas.fe.up.pt/~rossetti/rrwiki/lib/exe/fetch.php?media=teaching:1011:cal:08_2.09_1.grafos6.pdf
