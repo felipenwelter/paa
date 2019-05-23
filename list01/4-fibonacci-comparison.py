@@ -17,7 +17,7 @@ def fibo_i(n):
         return 1
     else:
 
-        for x in range(1,n):
+        for x in range(1,n): # complexidade de tempo: O(n) * O(1)
             res = n2 + n1
             n1 = n2
             n2 = res
@@ -32,7 +32,7 @@ def fibo_r(n):
     if (n <= 2):
         return 1
     else:
-        return fibo_r(n-1) + fibo_i(n-2)
+        return fibo_r(n-1) + fibo_i(n-2)  # complexidade T(n) = T(n-1) + T(n-2) -> exponencial O(2^n)
 
 
 
